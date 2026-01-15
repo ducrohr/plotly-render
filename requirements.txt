@@ -1,3 +1,5 @@
 flask
 plotly
+
 pandas
+gunicorn
