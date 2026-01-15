@@ -3,7 +3,6 @@ import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
 import io
-import base64
 
 app = Flask(__name__)
 
@@ -19,7 +18,7 @@ def execute_plot():
         # Plotly-Code vom AI Agent
         plotly_code = data.get('plotly_code', '')
         
-        # Sichere Ausführungsumgebung
+        # Sichere Ausführungsumgebung mit erlaubten Imports
         local_vars = {
             'df': df,
             'go': go,
@@ -27,8 +26,19 @@ def execute_plot():
             'pd': pd
         }
         
+        # Erlaube grundlegende Builtins
+        safe_globals = {
+            '__builtins__': {
+                '__import__': __import__,
+                'print': print,
+            },
+            'go': go,
+            'px': px,
+            'pd': pd
+        }
+        
         # Code ausführen
-        exec(plotly_code, {"__builtins__": {}}, local_vars)
+        exec(plotly_code, safe_globals, local_vars)
         
         # Figure aus local_vars holen
         fig = local_vars.get('fig')
@@ -40,7 +50,7 @@ def execute_plot():
             })
         else:
             return jsonify({
-                'error': 'No figure created',
+                'error': 'No figure created. Make sure your code creates a variable named "fig"',
                 'status': 'error'
             }), 400
             
