@@ -3,6 +3,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
 import io
+import re
 
 app = Flask(__name__)
 
@@ -18,12 +19,22 @@ def execute_plot():
         # Plotly-Code vom AI Agent
         plotly_code = data.get('plotly_code', '')
         
+        # 🔹 WICHTIG: Entferne pd.read_csv() Zeilen aus dem generierten Code
+        # Der AI Agent generiert manchmal df = pd.read_csv("file.csv")
+        # Wir ersetzen das, da df bereits existiert
+        plotly_code = re.sub(
+            r'df\s*=\s*pd\.read_csv\([^)]+\)',
+            '# df already loaded from csv_data',
+            plotly_code
+        )
+        
         # Sichere Ausführungsumgebung mit erlaubten Imports
         local_vars = {
             'df': df,
             'go': go,
             'px': px,
-            'pd': pd
+            'pd': pd,
+            'io': io
         }
         
         # Erlaube grundlegende Builtins
@@ -34,7 +45,8 @@ def execute_plot():
             },
             'go': go,
             'px': px,
-            'pd': pd
+            'pd': pd,
+            'io': io
         }
         
         # Code ausführen
